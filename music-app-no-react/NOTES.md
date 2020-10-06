@@ -128,6 +128,35 @@ undefined
     at REPLServer.emit (events.js:203:15)
     at REPLServer.EventEmitter.emit (domain.js:448:20)
 
+__FIX__: pieces was renamed to piecesDb
+`const existingPiece = this.pieces.get(hash)` -> `const existingPiece = this.piecesDb.get(hash)`
+
+-----------------------------
+
+> const cid = NPP.addNewPiece("QmNR2n4zywCV61MeMLB6JwPueAPqheqpfiA4fLPMxouEmQ")
+undefined
+> (node:4378) UnhandledPromiseRejectionWarning: TypeError: this.updatePieceByHash is not a function
+    at NewPiecePlease.addNewPiece (/home/user/orbit-playground/music-app-no-react/newpieceplease.js:52:24)
+
+__FIX__: updatePieceByHash haven't been defined yet.
+I will comment it out and write a `console.log();`
+
+
+-----------------------------
+
+ If I try `console.log(NPP.piecesDb.id);` in the .js file, not in console:
+ `TypeError: Cannot read property 'id' of undefined`
+ This is an async problem.
+
+__FIX__: I rewrote the constructor as a JavaScript Factory, with the help of @Brenden [Stackoverflow issue](https://stackoverflow.com/questions/64229558/how-to-wait-for-constructor-to-finish?noredirect=1#comment113578438_64229558)
+
+
+-----------------------------
+
+(node:9157) UnhandledPromiseRejectionWarning: TypeError: string.startsWith is not a function
+    at toCidAndPath (/home/user/orbit-playground/music-app-no-react/node_modules/ipfs-core-utils/src/to-cid-and-path.js:24:14)
+
+
 
 
 -----------------------------

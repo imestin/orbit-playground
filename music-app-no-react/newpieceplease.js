@@ -14,59 +14,62 @@ try {
 */
 
 class NewPiecePlease {
-    constructor(IPFS, OrbitDB) { 
-        this.OrbitDB = OrbitDB;
-
-        (async () => {
-            this.node = await IPFS.create();
+    constructor(orbitdb, node, piecesDb) {
+        this.orbitdb = orbitdb;
+        this.node = node;
+        this.piecesDb = piecesDb;
+      }
     
-            // Initalizing OrbitDB
-            this._init.bind(this);
-            this._init();
-            //this.node.on("error", (e) => {throw (e) });
-            //this.node.on("ready", this._init.bind(this));
-        })();
-    }
-
     // This will create OrbitDB instance, and orbitdb folder.
-    async _init() {
-        this.orbitdb = await this.OrbitDB.createInstance(this.node);
-        //this.onready();
+    static async create(IPFS, OrbitDB) {
+        const node = await IPFS.create();
+        const orbitdb = await OrbitDB.createInstance(node);
         console.log("OrbitDB instance created!");
-
-        this.defaultOptions = { accessController: { write: [this.orbitdb.identity.publicKey] }}
-
-        const docStoreOptions = {
-            ...this.defaultOptions,
-            indexBy: 'hash',
+    
+        const defaultOptions = {
+          accessController: {
+            write: [orbitdb.identity.publicKey]
+          }
         }
-        this.piecesDb = await this.orbitdb.docstore('pieces', docStoreOptions);
-        //console.log("this: ", this);
-        console.log("this.pieces: ", this.pieces);
-        await this.piecesDb.load();
-    }
-
+    
+        const docStoreOptions = { ...defaultOptions, indexBy: 'hash' };
+        const piecesDb = await orbitdb.docstore('pieces', docStoreOptions);
+        
+        await piecesDb.load();
+        
+        return new NewPiecePlease(orbitdb, node, piecesDb);
+      }
+    
     async addNewPiece(hash, instrument = "Piano") {
-        const existingPiece = this.pieces.get(hash)
+        const existingPiece = this.piecesDb.get(hash);
         if (existingPiece) {
-            await this.updatePieceByHash(hash, instrument);
+            //await this.updatePieceByHash(hash, instrument);
+            console.log("updatePieceByHash would run if it would exist.");
             return;
         }
-
+        
         const cid = await piecesDb.put({
-            hash: hash,
-            instrument: instrument
+            instrument: instrument,
         });
-
+        
         return cid; 
     }
+    
 }
 
 try {
     module.exports = exports = new NewPiecePlease(Ipfs, OrbitDB);
     // Application code
-    //const NPP = new NewPiecePlease;
-    //NPP.onready = () => { console.log(NPP.orbitdb.id) }
+    (async () => {
+        const NPP = await NewPiecePlease.create(Ipfs, OrbitDB);
+        console.log(NPP.piecesDb.id);
+        console.log("database ID: ", NPP.piecesDb.id);
+        const cid = NPP.addNewPiece("QmNR2n4zywCV61MeMLB6JwPueAPqheqpfiA4fLPMxouEmQ");
+        const content = await NPP.node.dag.get(cid);
+        console.log(acontent.value.payload)
+        //NPP.onready = () => { console.log(NPP.orbitdb.id) }
+
+    })();
 } catch (e) {
     console.log("Thre was an error.\n", e)
     //window.NPP = new NewPiecePlease(window.Ipfs, window.OrbitDB);
