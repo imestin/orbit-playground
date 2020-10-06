@@ -40,9 +40,25 @@ class NewPiecePlease {
             ...this.defaultOptions,
             indexBy: 'hash',
         }
-        this.pieces = await this.orbitdb.docstore('pieces', docStoreOptions);
+        this.piecesDb = await this.orbitdb.docstore('pieces', docStoreOptions);
         //console.log("this: ", this);
         console.log("this.pieces: ", this.pieces);
+        await this.piecesDb.load();
+    }
+
+    async addNewPiece(hash, instrument = "Piano") {
+        const existingPiece = this.pieces.get(hash)
+        if (existingPiece) {
+            await this.updatePieceByHash(hash, instrument);
+            return;
+        }
+
+        const cid = await piecesDb.put({
+            hash: hash,
+            instrument: instrument
+        });
+
+        return cid; 
     }
 }
 

@@ -101,3 +101,33 @@ TypeError: Cannot read property 'id' of undefined
 __FIX__: I removed this.onready();
 
 -----------------------------
+
+`...defaultOptions,`
+has to be
+`...this.defaultOptions,`
+
+-----------------------------
+
+[Chapter 2 - Managing Data]
+
+`this.pieces` was renamed to `this.piecesDb`
+
+-----------------------------
+
+> const cid = NPP.addNewPiece("QmNR2n4zywCV61MeMLB6JwPueAPqheqpfiA4fLPMxouEmQ")
+undefined
+> (node:3641) UnhandledPromiseRejectionWarning: TypeError: Cannot read property 'get' of undefined
+    at NewPiecePlease.addNewPiece (/home/user/orbit-playground/music-app-no-react/newpieceplease.js:50:43)
+    at repl:1:17
+    at sigintHandlersWrap (vm.js:288:15)
+    at Script.runInThisContext (vm.js:120:14)
+    at REPLServer.defaultEval (repl.js:332:29)
+    at bound (domain.js:402:14)
+    at REPLServer.runBound [as eval] (domain.js:415:12)
+    at REPLServer.onLine (repl.js:642:10)
+    at REPLServer.emit (events.js:203:15)
+    at REPLServer.EventEmitter.emit (domain.js:448:20)
+
+
+
+-----------------------------
