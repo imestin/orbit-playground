@@ -22,7 +22,7 @@ class NewPiecePlease {
     
     // This will create OrbitDB instance, and orbitdb folder.
     static async create(IPFS, OrbitDB) {
-        const node = await IPFS.create();
+        const node = await IPFS.create({repo: "./ipfs"});
         const orbitdb = await OrbitDB.createInstance(node);
         console.log("OrbitDB instance created!");
     
@@ -43,17 +43,52 @@ class NewPiecePlease {
     async addNewPiece(hash, instrument = "Piano") {
         const existingPiece = this.piecesDb.get(hash);
         if (existingPiece) {
-            //await this.updatePieceByHash(hash, instrument);
-            console.log("updatePieceByHash would run if it would exist.");
-            return;
+            const cid = await this.updatePieceByHash(hash, instrument);
+            //console.log("updatePieceByHash would run if it would exist.");
+            //console.log("THIS IS THE CID (in addNewPiece-existing): ", cid);
+            return cid;
         }
         
         const cid = await piecesDb.put({
+            hash: hash,
             instrument: instrument,
         });
-        
+        //console.log("THIS IS THE CID (in addNewPiece-new): ", cid);
         return cid; 
     }
+
+    async updatePieceByHash(hash, instrument = "Piano") {
+        console.log("HASH: ", hash)
+        const piece = await this.getPieceByHash(hash);
+        piece.instrument = instrument;
+        const cid = await this.piecesDb.put(piece);
+        console.log("THIS IS THE CID (in updatePieceByHash): ", cid);
+        return cid;
+    }
+
+    async deletePieceByHash(hash) {
+        const cid = await this.piecesDb.del(hash);
+        return cid;
+    }
+
+    getAllPiece() {
+        const pieces = this.piecesDb.get('');
+        return pieces;
+    }
+
+    getPieceByHash(hash) {
+        console.log("HASSH: ", hash)
+        console.log(typeof hash)
+        const singlePiece = this.piecesDb.get(hash)[0];
+        console.log("singlePiece", singlePiece)
+        return singlePiece;
+    }
+
+    getByInstrument(instrument) {
+        return this.piecesDb.query((piece) => piece.instrument === instrument);
+    }
+
+
     
 }
 
@@ -68,7 +103,9 @@ try {
         const content = await NPP.node.dag.get(cid);
         console.log(acontent.value.payload)
         //NPP.onready = () => { console.log(NPP.orbitdb.id) }
-
+        
+        // Shutting down IPFS node
+        await NPP.node.stop();
     })();
 } catch (e) {
     console.log("Thre was an error.\n", e)

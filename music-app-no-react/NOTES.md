@@ -89,6 +89,8 @@ I changed it to this:
 But this way, there is no error handling...
 
 IPFS directory I can't find, it was not created in the same directory as orbitdb.
+With the help of @tabcat I could find IPFS directory, it was in my home folder (`/home/user/.jsipfs`)
+I changed the IPFS.create part to this: `const node = await IPFS.create({repo: "./ipfs"});`
 
 -----------------------------
 
@@ -157,6 +159,27 @@ __FIX__: I rewrote the constructor as a JavaScript Factory, with the help of @Br
     at toCidAndPath (/home/user/orbit-playground/music-app-no-react/node_modules/ipfs-core-utils/src/to-cid-and-path.js:24:14)
 
 
+If I do a `console.log(typeof string)` in _ipfs-core-utils/to-cid-and-path.js_ i get `object`. I don't know is this is correct or not, I don't know if it should be object or string. In newpieceplease, the line that activated the error is:
 
+`const content = await NPP.node.dag.get(cid);`
+
+-----------------------------
+
+I tried inserting updatePieceByHash() function, (which is not written in the Field Manual at this point), because I think error is related to not having that function. This is the error I have now.
+
+(node:15455) UnhandledPromiseRejectionWarning: Error: invalid character '[' in '[object Promise]'
+    at Base.decode (/home/user/orbit-playground/music-app-no-react/node_modules/multibase/src/base.js:44:15)
+    at Function.decode (/home/user/orbit-playground/music-app-no-react/node_modules/multibase/src/index.js:68:14)
+    at Object.fromB58String (/home/user/orbit-playground/music-app-no-react/node_modules/multihashes/src/index.js:74:20)
+    at new CID (/home/user/orbit-playground/music-app-no-react/node_modules/cids/src/index.js:96:29)
+    at new CID (/home/user/orbit-playground/music-app-no-react/node_modules/class-is/index.js:15:17)
+    at toCidAndPath (/home/user/orbit-playground/music-app-no-react/node_modules/ipfs-core-utils/src/to-cid-and-path.js:33:11)
+    at get (/home/user/orbit-playground/music-app-no-react/node_modules/ipfs/src/core/components/dag/get.js:13:9)
+    at Object.args [as get] (/home/user/orbit-playground/music-app-no-react/node_modules/ipfs/src/core/utils.js:153:46)
+    at /home/user/orbit-playground/music-app-no-react/newpieceplease.js:97:44
+(node:15455) UnhandledPromiseRejectionWarning: Unhandled promise rejection. This error originated either by throwing inside of an async function without a catch block, or by rejecting a promise which was not handled with .catch(). (rejection id: 6)
+
+
+It is giving the stringified version of a [Object Promise] to the base decode function, instead of CID.
 
 -----------------------------
