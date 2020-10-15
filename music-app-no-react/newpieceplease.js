@@ -1,3 +1,4 @@
+const { globSource } = require('ipfs');
 const Ipfs = require('ipfs');
 const OrbitDB = require('orbit-db');
 
@@ -37,7 +38,6 @@ class NewPiecePlease {
         const docStoreOptions = { ...defaultOptions, indexBy: 'hash' };
         console.log("docStoreOptions", docStoreOptions);
         const piecesDb = await orbitdb.docstore('pieces', docStoreOptions);
-        
         await piecesDb.load();
         
         return new NewPiecePlease(orbitdb, node, piecesDb);
@@ -55,6 +55,7 @@ class NewPiecePlease {
                 return cid;
             }
             //console.log("accessController: ", this.piecesDb.options.accessController);
+            // The hash is linking to data in IPFS, in this case a pdf file.
             const cid = await this.piecesDb.put({
                 hash: hash,
                 instrument: instrument,
@@ -71,8 +72,6 @@ class NewPiecePlease {
     async updatePieceByHash(hash, instrument = "Piano") {
         try {
             console.log("HASH: ", hash)
-            const all = await this.getAllPiece();
-            console.log("all: ", all);
             let piece = await this.getPieceByHash(hash);
             // piece will be undefined. this.pieceDb.get(hash)[0] is not working.
             piece.instrument = instrument;
@@ -108,7 +107,12 @@ class NewPiecePlease {
         return this.piecesDb.query((piece) => piece.instrument === instrument);
     }
 
-
+    async uploadFileToIpfs(fileName) {
+        console.log("fileName is: ", fileName);
+        //console.log(this.node)
+        const file = await this.node.add(globSource('./NOTES.md'), {recursive: true});
+        return (file.cid).toString();
+    }
     
 }
 
@@ -122,11 +126,32 @@ try {
         const cid = await NPP.addNewPiece("QmNR2n4zywCV61MeMLB6JwPueAPqheqpfiA4fLPMxouEmQ");
         console.log("cid: ", cid);
         const content = await NPP.node.dag.get(cid);
-        console.log("content.value.payload", content.value.payload)
+        console.log("content.value.payload", content.value.payload);
         
+        const all = await NPP.getAllPiece();
+        console.log("all: ", all);
+        const piano = await NPP.getByInstrument("Piano");
+        console.log("Piano: ", piano);
+        // Random piano piece
+        const randomPiece = piano[piano.length * Math.random() | 0];
+        console.log("Random", randomPiece);
+        
+        // Update
+        const updateCid = await NPP.updatePieceByHash("QmNR2n4zywCV61MeMLB6JwPueAPqheqpfiA4fLPMxouEmQ", "Harpsichord");
+        console.log("Updated: ", NPP.getPieceByHash("QmNR2n4zywCV61MeMLB6JwPueAPqheqpfiA4fLPMxouEmQ"));
+        
+        // Delete
+        /*const deleteCid = await NPP.deletePieceByHash("123");
+        const deleteContent = await NPP.node.dag.get(deleteCid);
+        console.log("Deleted: ", deleteContent);*/
+        
+        // Upload file to IPFS
+        const uploadDataCid = await NPP.uploadFileToIpfs("./NOTES.md");
+        const uploadOrbitCid = await NPP.addNewPiece(uploadDataCid, "Note");
+        console.log("uploadOrbitCid: ", uploadOrbitCid);
         
         // Shutting down IPFS node
-        await NPP.node.stop();
+        //await NPP.node.stop();
     })();
 } catch (e) {
     console.log("Thre was an error.\n", e)

@@ -1,4 +1,5 @@
------------------------------
+
+ÊgÂg-----------------------------
 
 > const NPP = require('./newpieceplease')
 Thrown:
@@ -291,4 +292,4 @@ Probably this is related to that, that we inserted a CID of the format `CID(Qmcx
 If I delete orbitdb and ipfs folder, first it will run, then it will give the same error.
 I will try to get rid of the CID()
 
-----------------------------
+----------------------------Âg
