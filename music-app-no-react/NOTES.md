@@ -253,3 +253,25 @@ In
 
 -----------------------------
 
+string.startWith error:
+
+__FIX__:         Needs to await for const content = NPP.node.dag.get(cid);
+
+`const content = await NPP.node.dag.get(cid);`
+
+-----------------------------
+
+2020-10-15T16:10:23.996Z [ERROR] pubsub: { Error: not started yet
+    at Pubsub.getSubscribers (/home/user/orbit-playground/music-app-no-react/node_modules/libp2p-gossipsub/node_modules/libp2p-interfaces/src/pubsub/index.js:558:21)
+    at peers.args (/home/user/orbit-playground/music-app-no-react/node_modules/ipfs/src/core/components/pubsub.js:17:57)
+    at Object.args [as peers] (/home/user/orbit-playground/music-app-no-react/node_modules/ipfs/src/core/utils.js:153:46)
+    at IpfsPubsubPeerMonitor._pollPeers (/home/user/orbit-playground/music-app-no-react/node_modules/ipfs-pubsub-peer-monitor/src/ipfs-pubsub-peer-monitor.js:57:40)
+    at ontimeout (timers.js:436:11)
+    at tryOnTimeout (timers.js:300:5)
+    at listOnTimeout (timers.js:263:5)
+    at Timer.processTimers (timers.js:223:10) code: 'ERR_NOT_STARTED_YET' }
+
+
+
+
+-----------------------------

@@ -119,10 +119,11 @@ try {
         const NPP = await NewPiecePlease.create(Ipfs, OrbitDB);
         console.log(NPP.piecesDb.id);
         console.log("database ID: ", NPP.piecesDb.id);
-        const cid = NPP.addNewPiece("QmNR2n4zywCV61MeMLB6JwPueAPqheqpfiA4fLPMxouEmQ");
+        const cid = await NPP.addNewPiece("QmNR2n4zywCV61MeMLB6JwPueAPqheqpfiA4fLPMxouEmQ");
+        console.log("cid: ", cid);
         const content = await NPP.node.dag.get(cid);
-        console.log(content.value.payload)
-        //NPP.onready = () => { console.log(NPP.orbitdb.id) }
+        console.log("content.value.payload", content.value.payload)
+        
         
         // Shutting down IPFS node
         await NPP.node.stop();
