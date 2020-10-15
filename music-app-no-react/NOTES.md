@@ -217,6 +217,21 @@ has to be: `const cid = await this.piecesDb.put({`
 
 Error: Could not append entry, key "036f751928c1b4c7e304afd080263776f17ddf9eb598550039240039cb817ed692" is not allowed to write to the log
 
+I did `console.log("identity: ", identity)` in _/orbit-db-store/src/Store.js_ and found out that I'm using the correct key. _id belongs to _publicKey.
+If I do `console.log("accessController: ", this.piecesDb.options.accessController);` I can see the given key under `_write: [ '04f4...`
+The error happens in ipfs-log/src/log.js
 
+access.canAppend:  
+`
+async canAppend (entry, identityProvider) {
+    // Allow if access list contain the writer's publicKey or is '*'
+    const key = entry.identity.id
+    if (this.write.includes(key) || this.write.includes('*')) {
+      // check identity is valid
+      return identityProvider.verifyIdentity(entry.identity)
+    }
+    return false
+  }
+`
 
 -----------------------------

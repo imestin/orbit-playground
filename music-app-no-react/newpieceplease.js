@@ -32,7 +32,9 @@ class NewPiecePlease {
           }
         }
     
+        console.log("orbitdb.identity.publicKey: ", orbitdb.identity.publicKey);
         const docStoreOptions = { ...defaultOptions, indexBy: 'hash' };
+        console.log("docStoreOptions", docStoreOptions);
         const piecesDb = await orbitdb.docstore('pieces', docStoreOptions);
         
         await piecesDb.load();
@@ -46,12 +48,12 @@ class NewPiecePlease {
             console.log("existing[0]", existingPiece[0])
             console.log("existing?", existingPiece[0] && true);
             if (existingPiece[0]) {
-                //console.log("updatePieceByHash would run if it would exist.");
+                console.log("updatePieceByHash will run: ");
                 const cid = await this.updatePieceByHash(hash, instrument);
-                //console.log("THIS IS THE CID (in addNewPiece-existing): ", cid);
+                console.log("THIS IS THE CID (in addNewPiece-existing): ", cid);
                 return cid;
             }
-            
+            //console.log("accessController: ", this.piecesDb.options.accessController);
             const cid = await this.piecesDb.put({
                 hash: hash,
                 instrument: instrument,
@@ -66,15 +68,21 @@ class NewPiecePlease {
     }
 
     async updatePieceByHash(hash, instrument = "Piano") {
-        console.log("HASH: ", hash)
-        const all = await this.getAllPiece();
-        console.log("all: ", all);
-        let piece = await this.getPieceByHash(hash);
-        // piece will be undefined. this.pieceDb.get(hash)[0] is not working.
-        piece.instrument = instrument;
-        const cid = await this.piecesDb.put(piece);
-        console.log("THIS IS THE CID (in updatePieceByHash): ", cid);
-        return cid;
+        try {
+            console.log("HASH: ", hash)
+            const all = await this.getAllPiece();
+            console.log("all: ", all);
+            let piece = await this.getPieceByHash(hash);
+            // piece will be undefined. this.pieceDb.get(hash)[0] is not working.
+            piece.instrument = instrument;
+            const cid = await this.piecesDb.put(piece);
+            console.log("THIS IS THE CID (in updatePieceByHash): ", cid);
+            return cid;
+
+        } catch (err) {
+            console.error("Error in updatePieceByHash");
+            console.error(err);
+        }
     }
 
     async deletePieceByHash(hash) {
@@ -111,7 +119,7 @@ try {
         console.log(NPP.piecesDb.id);
         console.log("database ID: ", NPP.piecesDb.id);
         const cid = NPP.addNewPiece("QmNR2n4zywCV61MeMLB6JwPueAPqheqpfiA4fLPMxouEmQ");
-        const content = await NPP.node.dag.get(cid.toString());
+        const content = await NPP.node.dag.get(cid);
         console.log(content.value.payload)
         //NPP.onready = () => { console.log(NPP.orbitdb.id) }
         
