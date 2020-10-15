@@ -41,25 +41,36 @@ class NewPiecePlease {
       }
     
     async addNewPiece(hash, instrument = "Piano") {
-        const existingPiece = this.piecesDb.get(hash);
-        if (existingPiece) {
-            const cid = await this.updatePieceByHash(hash, instrument);
-            //console.log("updatePieceByHash would run if it would exist.");
-            //console.log("THIS IS THE CID (in addNewPiece-existing): ", cid);
-            return cid;
+        try {
+            const existingPiece = this.piecesDb.get(hash);
+            console.log("existing[0]", existingPiece[0])
+            console.log("existing?", existingPiece[0] && true);
+            if (existingPiece[0]) {
+                //console.log("updatePieceByHash would run if it would exist.");
+                const cid = await this.updatePieceByHash(hash, instrument);
+                //console.log("THIS IS THE CID (in addNewPiece-existing): ", cid);
+                return cid;
+            }
+            
+            const cid = await this.piecesDb.put({
+                hash: hash,
+                instrument: instrument,
+            });
+            console.log("THIS IS THE CID (in addNewPiece-new): ", cid);
+            return cid; 
+
+        } catch (err) {
+            console.error("Error while adding new piece");
+            console.error(err);
         }
-        
-        const cid = await piecesDb.put({
-            hash: hash,
-            instrument: instrument,
-        });
-        //console.log("THIS IS THE CID (in addNewPiece-new): ", cid);
-        return cid; 
     }
 
     async updatePieceByHash(hash, instrument = "Piano") {
         console.log("HASH: ", hash)
-        const piece = await this.getPieceByHash(hash);
+        const all = await this.getAllPiece();
+        console.log("all: ", all);
+        let piece = await this.getPieceByHash(hash);
+        // piece will be undefined. this.pieceDb.get(hash)[0] is not working.
         piece.instrument = instrument;
         const cid = await this.piecesDb.put(piece);
         console.log("THIS IS THE CID (in updatePieceByHash): ", cid);
@@ -77,10 +88,10 @@ class NewPiecePlease {
     }
 
     getPieceByHash(hash) {
-        console.log("HASSH: ", hash)
-        console.log(typeof hash)
+        console.log("HASH: ", hash)                 // will give hash
+        console.log(typeof hash)                    // will give string
         const singlePiece = this.piecesDb.get(hash)[0];
-        console.log("singlePiece", singlePiece)
+        console.log("singlePiece", singlePiece)     // undefined
         return singlePiece;
     }
 
@@ -100,8 +111,8 @@ try {
         console.log(NPP.piecesDb.id);
         console.log("database ID: ", NPP.piecesDb.id);
         const cid = NPP.addNewPiece("QmNR2n4zywCV61MeMLB6JwPueAPqheqpfiA4fLPMxouEmQ");
-        const content = await NPP.node.dag.get(cid);
-        console.log(acontent.value.payload)
+        const content = await NPP.node.dag.get(cid.toString());
+        console.log(content.value.payload)
         //NPP.onready = () => { console.log(NPP.orbitdb.id) }
         
         // Shutting down IPFS node

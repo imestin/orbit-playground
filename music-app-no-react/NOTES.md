@@ -182,4 +182,41 @@ I tried inserting updatePieceByHash() function, (which is not written in the Fie
 
 It is giving the stringified version of a [Object Promise] to the base decode function, instead of CID.
 
+Somewhy         `const singlePiece = this.piecesDb.get(hash)[0];` is giving undefined.
+orbit-db-docstore / DocumentStore.js is still getting the hash, that's correct.
+
+In __DocumentStore.js__, 
+`Object.keys(this._index._index)
+      .filter(filter)
+      .map(mapper)` will give empty array `[]` in the get function. In the top of the __get__ function, I can still read `key`, it will give a hash value
+
+
+-----------------------------
+
+`async addNewPiece(hash, instrument = "Piano") {
+        const existingPiece = this.piecesDb.get(hash);
+        console.log("existing", existingPiece)              // -> []
+        console.log("existing?", existingPiece && true);    // -> true
+        if (existingPiece) {
+            const cid = await this.updatePieceByHash(hash, instrument);
+            return cid;
+        }`
+I think existingPiece if statement will run even if there is no piece yet. So we will try to update a non-existing piece.
+I will change it to `existingPiece[0]`, because undefined if falsy.
+
+I added a try..catch to addNewPiece
+
+`Error while adding new piece
+ReferenceError: piecesDb is not defined`
+
+this line: `const cid = await piecesDb.put({`
+has to be: `const cid = await this.piecesDb.put({`
+
+-----------------------------
+
+
+Error: Could not append entry, key "036f751928c1b4c7e304afd080263776f17ddf9eb598550039240039cb817ed692" is not allowed to write to the log
+
+
+
 -----------------------------
