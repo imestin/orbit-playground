@@ -234,4 +234,22 @@ async canAppend (entry, identityProvider) {
   }
 `
 
+I will try '*'
+
 -----------------------------
+
+Now I get `(node:10904) UnhandledPromiseRejectionWarning: TypeError: string.startsWith is not a function`, but adding a piece works.
+
+IPFSAccessController has attribute `_write`. Probably it is problem that in access.canAppend we are looking for `write`. But this can not be the problem, because * works.
+
+In 
+`const defaultOptions = {
+          accessController: {
+            write: [orbitdb.identity.publicKey]
+          }
+        }`
+
+`orbitdb.identity.publicKey` needs to be changed to `orbitdb.identity.id`
+
+-----------------------------
+

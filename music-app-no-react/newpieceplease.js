@@ -25,10 +25,11 @@ class NewPiecePlease {
         const node = await IPFS.create({repo: "./ipfs"});
         const orbitdb = await OrbitDB.createInstance(node);
         console.log("OrbitDB instance created!");
-    
+        
+        //orbitdb.identity.publicKey
         const defaultOptions = {
           accessController: {
-            write: [orbitdb.identity.publicKey]
+            write: [orbitdb.identity.id]
           }
         }
     
