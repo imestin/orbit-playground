@@ -15,10 +15,11 @@ try {
 */
 
 class NewPiecePlease {
-    constructor(orbitdb, node, piecesDb) {
+    constructor(orbitdb, node, piecesDb, user) {
         this.orbitdb = orbitdb;
         this.node = node;
         this.piecesDb = piecesDb;
+        this.user = user;
       }
     
     // This will create OrbitDB instance, and orbitdb folder.
@@ -40,11 +41,11 @@ class NewPiecePlease {
         const piecesDb = await orbitdb.docstore('pieces', docStoreOptions);
         await piecesDb.load();
 
-        this.user = await this.orbitdb.kvstore("user", this.defaultOptions);
-        await this.user.load();
-        await this.user.set('pieces', this.pieces.id);
+        const user = await orbitdb.kvstore("user", this.defaultOptions);
+        await user.load();
+        await user.set('pieces', piecesDb.id);
         
-        return new NewPiecePlease(orbitdb, node, piecesDb);
+        return new NewPiecePlease(orbitdb, node, piecesDb, user);
       }
     
     async addNewPiece(hash, instrument = "Piano") {
@@ -143,14 +144,14 @@ class NewPiecePlease {
     }
 
     getAllProfileFields() {
-        return NPP.user.all();
+        return this.user.all;
     }
 
     getProfileField(key) {
         return this.user.get(key);
     }
 
-    async updateProfileField(key, value) {
+    async updateProfile(key, value) {
         const cid = await this.user.set(key, value);
         return cid;
     }
@@ -203,7 +204,8 @@ try {
 
         // User profile
         await NPP.updateProfile("username", "aphelionz");
-        var profileFields = NPP.getAllProfileFields();A
+        var profileFields = NPP.getAllProfileFields();
+        console.log("All profile fields: ", profileFields);
         // { "username": "aphelionz", "pieces": "/orbitdb/zdpu...../pieces" }
         await NPP.deleteProfileField("username");
         

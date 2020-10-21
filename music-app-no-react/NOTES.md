@@ -300,6 +300,16 @@ __Creating users__
 (node:5592) UnhandledPromiseRejectionWarning: TypeError: Cannot read property 'kvstore' of undefined
     at Function.create (/home/user/orbit-playground/music-app-no-react/newpieceplease.js:43:40)
 
+__FIX__: `this.orbitdb` needs to be `orbitdb`, because we use factory for class creation. `this.pieces` is `piecesDb`
+"user" has to be a new parameter, similarly like "piecesDb". `const` instead of `this.`
 
+----------------------------
+
+(node:6541) UnhandledPromiseRejectionWarning: TypeError: NPP.updateProfile is not a function
+
+__FIX__: Function name is not correct. `updateProfileField` -> `updateProfile`
+In getAllProfileFields,  `return NPP.user.all();` has to be `return this.user.all();`
+`var profileFields = NPP.getAllProfileFields();A` typo "A"
+`return this.user.all();` -> `return this.user.all;`
 
 ----------------------------
