@@ -21,10 +21,11 @@ class NewPiecePlease {
         this.piecesDb = piecesDb;
         this.user = user;
       }
-    
+
     // This will create OrbitDB instance, and orbitdb folder.
     static async create(IPFS, OrbitDB) {
         const node = await IPFS.create({repo: "./ipfs"});
+        const peerInfo = await node.id();
         const orbitdb = await OrbitDB.createInstance(node);
         console.log("OrbitDB instance created!");
         
@@ -44,9 +45,22 @@ class NewPiecePlease {
         const user = await orbitdb.kvstore("user", this.defaultOptions);
         await user.load();
         await user.set('pieces', piecesDb.id);
+
+        // Random user id
+        const fixtureData = {
+            "username": Math.floor(Math.random() * 1000000),
+            "pieces": piecesDb.id,
+            "nodeId": peerInfo.id
+        };
+        const fixtureKeys = Object.keys(fixtureData);
+        for (let i in fixtureKeys) {
+            let key = fixtureKeys[i];
+            console.log(this);
+            if(!user.get(key)) await user.set(key, fixtureData[key]);
+        }
         
         return new NewPiecePlease(orbitdb, node, piecesDb, user);
-      }
+    }
     
     async addNewPiece(hash, instrument = "Piano") {
         try {
@@ -154,6 +168,15 @@ class NewPiecePlease {
     async updateProfile(key, value) {
         const cid = await this.user.set(key, value);
         return cid;
+    }
+
+    static async loadFixtureData(fixtureData) {
+        const fixtureKeys = Object.keys(fixtureData);
+        for (let i in fixtureKeys) {
+            let key = fixtureKeys[i];
+            console.log(this);
+            if(!this.user.get(key)) await this.user.set(key, fixtureData[key]);
+        }
     }
 }
 
