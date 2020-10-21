@@ -1,4 +1,5 @@
------------------------------
+
+Œh„h-----------------------------
 
 > const NPP = require('./newpieceplease')
 Thrown:
@@ -295,11 +296,4 @@ With `(file.cid).toString()` there is no encapsulating "CID()"
 
 ----------------------------
 
-__Creating users__
-
-(node:5592) UnhandledPromiseRejectionWarning: TypeError: Cannot read property 'kvstore' of undefined
-    at Function.create (/home/user/orbit-playground/music-app-no-react/newpieceplease.js:43:40)
-
-
-
-----------------------------
+„h

@@ -39,6 +39,10 @@ class NewPiecePlease {
         console.log("docStoreOptions", docStoreOptions);
         const piecesDb = await orbitdb.docstore('pieces', docStoreOptions);
         await piecesDb.load();
+
+        this.user = await this.orbitdb.kvstore("user", this.defaultOptions);
+        await this.user.load();
+        await this.user.set('pieces', this.pieces.id);
         
         return new NewPiecePlease(orbitdb, node, piecesDb);
       }
@@ -54,11 +58,18 @@ class NewPiecePlease {
                 console.log("THIS IS THE CID (in addNewPiece-existing): ", cid);
                 return cid;
             }
+
             //console.log("accessController: ", this.piecesDb.options.accessController);
             // The hash is linking to data in IPFS, in this case a pdf file.
+
+            const dbName = "counter." +  hash.substr(20,20);
+            const counterDb = await this.orbitdb.counter(dbName, this.defaultOptions);
+
+
             const cid = await this.piecesDb.put({
                 hash: hash,
                 instrument: instrument,
+                counter: counterDb.id
             });
             console.log("THIS IS THE CID (in addNewPiece-new): ", cid);
             return cid; 
@@ -110,10 +121,39 @@ class NewPiecePlease {
     async uploadFileToIpfs(fileName) {
         console.log("fileName is: ", fileName);
         //console.log(this.node)
-        const file = await this.node.add(globSource('./NOTES.md'), {recursive: true});
+        const file = await this.node.add(globSource('./NOTES.md'), {recursive: true});  
         return (file.cid).toString();
     }
+
+    async getPracticeCount(piece) {
+        const counter = await this.orbitdb.counter(piece.counter);
+        await counter.load();
+        return counter.value;
+    }
     
+    async incrementPracticeCounter(piece) {
+        const counter = await this.orbitdb.counter(piece.counter);
+        const cid = await counter.inc();
+        return cid;
+    }
+
+    async deleteProfileField(key) {
+        const cid = await this.user.del(key);
+        return cid;
+    }
+
+    getAllProfileFields() {
+        return NPP.user.all();
+    }
+
+    getProfileField(key) {
+        return this.user.get(key);
+    }
+
+    async updateProfileField(key, value) {
+        const cid = await this.user.set(key, value);
+        return cid;
+    }
 }
 
 try {
@@ -149,6 +189,23 @@ try {
         const uploadDataCid = await NPP.uploadFileToIpfs("./NOTES.md");
         const uploadOrbitCid = await NPP.addNewPiece(uploadDataCid, "Note");
         console.log("uploadOrbitCid: ", uploadOrbitCid);
+
+        // Counter
+        const counterCid = await NPP.addNewPiece("QmdzDacgJ9EQF9Z8G3L1fzFwiEu255Nm5WiCey9ntrDPSL", "Piano");
+        const counterContent = await NPP.node.dag.get(counterCid);
+        console.log(counterContent.value.payload.value);
+
+        // Increment counter
+        const piece = NPP.getPieceByHash("QmdzDacgJ9EQF9Z8G3L1fzFwiEu255Nm5WiCey9ntrDPSL");
+        const incCid = await NPP.incrementPracticeCounter(piece);
+        const incContent = await NPP.node.dag.get(incCid);
+        console.log(incContent.value.payload);
+
+        // User profile
+        await NPP.updateProfile("username", "aphelionz");
+        var profileFields = NPP.getAllProfileFields();A
+        // { "username": "aphelionz", "pieces": "/orbitdb/zdpu...../pieces" }
+        await NPP.deleteProfileField("username");
         
         // Shutting down IPFS node
         //await NPP.node.stop();
