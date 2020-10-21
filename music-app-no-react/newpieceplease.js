@@ -5,15 +5,6 @@ const OrbitDB = require('orbit-db');
 // window object does not exist on the command line
 //var window = {};
 
-/*
-try {
-    const Ipfs = require('ipfs');
-    const OrbitDB = require('orbit-db');
-} catch(e) { 
-    console.log("Error loading modules!", e)
-}
-*/
-
 class NewPiecePlease {
     constructor(orbitdb, node, piecesDb, user) {
         this.orbitdb = orbitdb;
@@ -58,10 +49,17 @@ class NewPiecePlease {
             console.log(this);
             if(!user.get(key)) await user.set(key, fixtureData[key]);
         }
+
         
         return new NewPiecePlease(orbitdb, node, piecesDb, user);
     }
     
+    // Because create is not working because of static
+    createEvents() {
+        this.node.libp2p.on("peer:connect", this.handlePeerConnected.bind(this));
+        console.log("Event(s) created.");
+    }
+
     async addNewPiece(hash, instrument = "Piano") {
         try {
             const existingPiece = this.piecesDb.get(hash);
@@ -86,7 +84,6 @@ class NewPiecePlease {
                 instrument: instrument,
                 counter: counterDb.id
             });
-            console.log("THIS IS THE CID (in addNewPiece-new): ", cid);
             return cid; 
 
         } catch (err) {
@@ -97,12 +94,9 @@ class NewPiecePlease {
 
     async updatePieceByHash(hash, instrument = "Piano") {
         try {
-            console.log("HASH: ", hash)
             let piece = await this.getPieceByHash(hash);
-            // piece will be undefined. this.pieceDb.get(hash)[0] is not working.
             piece.instrument = instrument;
             const cid = await this.piecesDb.put(piece);
-            console.log("THIS IS THE CID (in updatePieceByHash): ", cid);
             return cid;
 
         } catch (err) {
@@ -122,10 +116,7 @@ class NewPiecePlease {
     }
 
     getPieceByHash(hash) {
-        console.log("HASH: ", hash)                 // will give hash
-        console.log(typeof hash)                    // will give string
         const singlePiece = this.piecesDb.get(hash)[0];
-        console.log("singlePiece", singlePiece)     // undefined
         return singlePiece;
     }
 
@@ -170,6 +161,7 @@ class NewPiecePlease {
         return cid;
     }
 
+    // obsolate
     static async loadFixtureData(fixtureData) {
         const fixtureKeys = Object.keys(fixtureData);
         for (let i in fixtureKeys) {
@@ -178,6 +170,31 @@ class NewPiecePlease {
             if(!this.user.get(key)) await this.user.set(key, fixtureData[key]);
         }
     }
+
+    async getIpfsPeers() {
+        const peers = await this.node.swarm.peers();
+        return peers;
+    }
+
+    async connectToPeer(multiaddr, protocol ="/p2p-circuit/ipfs/") {
+        try {
+            console.log("swarm.connect: ", protocol + multiaddr);
+            await this.node.swarm.connect(protocol + multiaddr);
+        } catch (e) {
+            throw(e);
+        }
+    }
+
+    handlePeerConnected(ipfsPeer) {
+        console.log("CONNECTED! CONNECTED!")
+        const ipfsId = ipfsPeer.id._idB58String;
+        console.log("ipfsId: ", ipfsId);
+        if (this.onpeerconnect) this.onpeerconnect(ipfsId);
+    }
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 try {
@@ -187,6 +204,7 @@ try {
         const NPP = await NewPiecePlease.create(Ipfs, OrbitDB);
         console.log(NPP.piecesDb.id);
         console.log("database ID: ", NPP.piecesDb.id);
+        NPP.createEvents();
         const cid = await NPP.addNewPiece("QmNR2n4zywCV61MeMLB6JwPueAPqheqpfiA4fLPMxouEmQ");
         console.log("cid: ", cid);
         const content = await NPP.node.dag.get(cid);
@@ -232,6 +250,26 @@ try {
         // { "username": "aphelionz", "pieces": "/orbitdb/zdpu...../pieces" }
         await NPP.deleteProfileField("username");
         
+        // Bootstrap list
+        const bootstrapList = await NPP.node.bootstrap.list();
+        console.log("Bootstrap list: ", bootstrapList);
+
+        // Addresses
+        const id = await NPP.node.id();
+        console.log("Addresses: ", id.addresses);
+        
+        
+        // Peers
+        for (let i = 0; i < 4; i++) {
+            let peers = await NPP.getIpfsPeers();
+            console.log("IPFS peers: ", peers);
+            await sleep(1000);
+        }
+
+        // onPeerConnect
+        NPP.onpeerconnect = console.log;
+        await NPP.connectToPeer("QmWxWkrCcgNBG2uf1HSVAwb9RzcSYYC2d6CRsfJcqrz2FX");
+
         // Shutting down IPFS node
         //await NPP.node.stop();
     })();

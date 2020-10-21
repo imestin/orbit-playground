@@ -340,3 +340,45 @@ __FIX__: loadFixtureData was moved inline (into _static async create(IPFS, Orbit
 
 ----------------------------
 
+__Chapter 4__
+
+Because of new API, we are using IPFS.create(). With this method, configuration is different. In my version, it is
+`const node = await IPFS.create({repo: "./ipfs"});`
+
+We are already online. IPFS.create() will start IPFS in online mode.
+
+----------------------------
+
+(node:16718) UnhandledPromiseRejectionWarning: TypeError: Cannot read property 'bind' of undefined
+
+This is again the 'static' problem. 2 possible solution.
+1) Do the creation of the event in separate function.
+2) Make handlePeerConnected() static
+
+I will create a `createEvents()` function.
+
+
+----------------------------
+
+(node:17036) UnhandledPromiseRejectionWarning: AggregateError: 
+    Error: Invalid version, must be a number equal to 1 or 0
+        at Function.validateCID (/home/user/orbit-playground/music-app-no-react/node_modules/cids/src/index.js:312:13)
+        at new CID (/home/user/orbit-playground/music-app-no-react/node_modules/cids/src/index.js:151:9)
+        at new CID (/home/user/orbit-playground/music-app-no-react/node_modules/class-is/index.js:15:17)
+        at Function.exports.createFromCID (/home/user/orbit-playground/music-app-no-react/node_modules/peer-id/src/index.js:248:32)
+        at ClassIsWrapper.dial (/home/user/orbit-playground/music-app-no-react/node_modules/libp2p/src/circuit/index.js:107:30)
+        at TransportManager.dial (/home/user/orbit-playground/music-app-no-react/node_modules/libp2p/src/transport-manager.js:89:30)
+        at DialRequest.dialAction (/home/user/orbit-playground/music-app-no-react/node_modules/libp2p/src/dialer/index.js:149:36)
+        at pAny.addrs.map (/home/user/orbit-playground/music-app-no-react/node_modules/libp2p/src/dialer/dial-request.js:58:29)
+    at maybeSettle (/home/user/orbit-playground/music-app-no-react/node_modules/p-some/index.js:31:11)
+    at /home/user/orbit-playground/music-app-no-react/node_modules/p-some/index.js:69:23
+
+
+Sometimes other.version will be `null` Qm... CIDs are giving `0`, longer CIDs are giving `1`.
+
+
+`const peers = await this.node.swarm.peers();` gives empty array. Maybe that is problem.
+
+I solved this with writing an async sleep(x) function. After sleeping 1 second, listing the peers works.
+
+----------------------------
