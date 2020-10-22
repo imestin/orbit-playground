@@ -1,3 +1,6 @@
+js-ipfs version: 0.50.0
+orbit-db:   0.26.0
+
 -----------------------------
 
 > const NPP = require('./newpieceplease')
@@ -380,5 +383,7 @@ Sometimes other.version will be `null` Qm... CIDs are giving `0`, longer CIDs ar
 `const peers = await this.node.swarm.peers();` gives empty array. Maybe that is problem.
 
 I solved this with writing an async sleep(x) function. After sleeping 1 second, listing the peers works.
+
+CID problem is not solved.
 
 ----------------------------

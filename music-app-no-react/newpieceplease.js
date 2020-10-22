@@ -56,6 +56,9 @@ class NewPiecePlease {
     
     // Because create is not working because of static
     createEvents() {
+        this.node.libp2p.on('peer:discovery', (connection) => {
+            console.log('Connection established to:', "nothing")	// Emitted when a new connection has been created
+          })
         this.node.libp2p.on("peer:connect", this.handlePeerConnected.bind(this));
         console.log("Event(s) created.");
     }
@@ -176,7 +179,7 @@ class NewPiecePlease {
         return peers;
     }
 
-    async connectToPeer(multiaddr, protocol ="/p2p-circuit/ipfs/") {
+    async connectToPeer(multiaddr, protocol = "/p2p-circuit/ipfs/") {
         try {
             console.log("swarm.connect: ", protocol + multiaddr);
             await this.node.swarm.connect(protocol + multiaddr);
