@@ -386,4 +386,71 @@ I solved this with writing an async sleep(x) function. After sleeping 1 second, 
 
 CID problem is not solved.
 
+__INFO__: This is a bug in lib-p2p. See [this issue](https://github.com/libp2p/js-libp2p/issues/789).
+
 ----------------------------
+
+`await this.node.pubsub.subscribe(nodeInfo.id, this.handleMessageReceived.bind(this));`
+
+"await is only valid in async function"
+
+__FIX__: I made createEvents async. (That would be in _init in the original manual)
+
+
+----------------------------
+
+__Part I Chapter 5__
+
+Log will say:
+`
+2020-10-28T15:08:36.881Z [DEBUG] orbit-db: open()
+2020-10-28T15:08:36.881Z [DEBUG] orbit-db: Open database 'pieces'
+2020-10-28T15:08:36.881Z [WARN]  orbit-db: Not a valid OrbitDB address 'pieces', creating the database
+2020-10-28T15:08:36.881Z [DEBUG] orbit-db: create()
+2020-10-28T15:08:36.882Z [DEBUG] orbit-db: Creating database 'pieces' as docstore
+2020-10-28T15:08:36.912Z [DEBUG] cache: cache: Set /orbitdb/zdpuArX7uF19miq1vHBfbXM1nzXgXmHJewBkvjgUfmdsUkf4f/pieces/_manifest to zdpuArX7uF19miq1vHBfbXM1nzXgXmHJewBkvjgUfmdsUkf4f
+
+`
+This is probably not good.
+
+
+----------------------------
+
+/home/user/orbit-playground/music-app-no-react/newpieceplease.js:198
+        }, 2000)$
+
+__FIX__: This is most likely a typo. Removing $.
+
+----------------------------
+
+(Discovering Peers)
+
+Aggregator error....
+
+__INFO__: This is a bug in lib-p2p. See [this issue](https://github.com/libp2p/js-libp2p/issues/789).
+
+
+----------------------------
+
+(Connecting automatically to peers with discovered databases)
+
+Because of JavaScript Factory, I had to change `this.companions` to `const companions`. I added `companions` to constructor.
+
+
+Probably these lines:
+`
+this.companionConnectionInterval = setInterval(this.connectToCompanions.bind(this), 10000);
+this.connectToCompanions();
+`
+
+Shouldn't be inside create() function, but inside createEvents() or somewhere else. I can't test this, because connectToPeer() is not working.
+
+
+
+----------------------------
+
+(node:8528) UnhandledPromiseRejectionWarning: TypeError: Cannot read property 'bind' of undefined
+    at Function.create (/home/user/orbit-playground/music-app-no-react/newpieceplease.js:57:81)
+
+
+I can't test this without connectToPeer() working.

@@ -59,6 +59,6 @@ TypeError: NPP.pieces is undefined
 I'll try to follow the no-react source code.
 
 
-
+Upload file to IPFS does not work.
 
 -----------------------------

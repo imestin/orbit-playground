@@ -6,10 +6,11 @@ const OrbitDB = require('orbit-db');
 //var window = {};
 
 class NewPiecePlease {
-    constructor(orbitdb, node, piecesDb, user) {
+    constructor(orbitdb, node, piecesDb, user, companions) {
         this.orbitdb = orbitdb;
         this.node = node;
         this.piecesDb = piecesDb;
+        this.companions = companions;
         this.user = user;
       }
 
@@ -37,6 +38,9 @@ class NewPiecePlease {
         await user.load();
         await user.set('pieces', piecesDb.id);
 
+        const companions = await orbitdb.keyvalue("companions", this.defaultOptions);
+        await companions.load();
+
         // Random user id
         const fixtureData = {
             "username": Math.floor(Math.random() * 1000000),
@@ -50,16 +54,20 @@ class NewPiecePlease {
             if(!user.get(key)) await user.set(key, fixtureData[key]);
         }
 
+        //this.companionConnectionInterval = setInterval(this.connectToCompanions.bind(this), 10000);
+        //this.connectToCompanions();
         
-        return new NewPiecePlease(orbitdb, node, piecesDb, user);
+        return new NewPiecePlease(orbitdb, node, piecesDb, user, companions);
     }
     
     // Because create is not working because of static
-    createEvents() {
+    async createEvents() {
         this.node.libp2p.on('peer:discovery', (connection) => {
             console.log('Connection established to:', "nothing")	// Emitted when a new connection has been created
-          })
+        })
         this.node.libp2p.on("peer:connect", this.handlePeerConnected.bind(this));
+        // Pubsub
+        await this.node.pubsub.subscribe(nodeInfo.id, this.handleMessageReceived.bind(this));
         console.log("Event(s) created.");
     }
 
@@ -191,9 +199,58 @@ class NewPiecePlease {
     handlePeerConnected(ipfsPeer) {
         console.log("CONNECTED! CONNECTED!")
         const ipfsId = ipfsPeer.id._idB58String;
+        setTimeout(async () => {
+            await this.sendMessage(ipfsId, { userDb: this.user.id });
+        }, 2000);
         console.log("ipfsId: ", ipfsId);
         if (this.onpeerconnect) this.onpeerconnect(ipfsId);
     }
+
+    async handleMessageReceived(msg) {
+        const parsedMsg = JSON.parse(msg.data.toString());
+        const msgKeys = Object.keys(parsedMsg);
+
+        switch (msgKeys[0]) {
+            case "userDb":
+                var peerDb = await this.orbitdb.open(parsedMsg.userDb);
+                peerDb.events.on("replicated", async () => {
+                    if (peerDb.get("pieces")) {
+                        await this.companions.set(peerDb.id, peerDb.all());
+                        this.ondbdiscovered && this.ondbdiscovered(peerDb);
+                    }
+                });
+                break;
+            default:
+                break;
+        }
+
+        if(this.onmessage) this.onmessage(msg);
+    }
+
+    async sendMessage(topic, message, callback) {
+        try {
+            const msgString = JSON.stringify(message);
+            const messageBuffer = this.node.types.Buffer(msgString);
+            await this.node.pubsub.publish(topic, messageBuffer);
+        } catch (e) {
+            
+        }
+    }
+
+    async connectToCompanions() {
+        const companionIds = Object.values(this.companions.all()).map(companion => companion.nodeId);
+        const connectedPeerIds = await this.getIpfsPeers();
+        companionIds.forEach(async (companionId) => {
+            if (connectedPeerIds.indexOf(companionId) !== -1) return;
+            try {
+                await this.connectToPeer(companionId);
+                this.oncompaniononline && this.oncompaniononline();
+            } catch (e) {
+                this.oncompanionnotfound && this.oncompanionnotfound();
+            }
+        });
+    }
+
 }
 
 function sleep(ms) {
@@ -270,8 +327,26 @@ try {
         }
 
         // onPeerConnect
-        NPP.onpeerconnect = console.log;
-        await NPP.connectToPeer("QmWxWkrCcgNBG2uf1HSVAwb9RzcSYYC2d6CRsfJcqrz2FX");
+        //NPP.onpeerconnect = console.log;
+        //await NPP.connectToPeer("QmWxWkrCcgNBG2uf1HSVAwb9RzcSYYC2d6CRsfJcqrz2FX");
+
+        // Skipped
+        console.log("We are skipping connectToPeer...");
+
+        // Pubsub
+        let data = { some: "example", someNumber: 8 }
+        const hash = "QmXG8yk8UJjMT6qtE2zSxzz3U7z5jSYRgVWLCUFqAVnByM";
+        const callback = console.error;
+        await NPP.sendMessage(hash, data, callback);
+
+        NPP.onmessage = console.log;
+
+        // Connect to peer
+        //await NPP.connectToPeer("QmWxWkrCcgNBG2uf1HSVAwb9RzcSYYC2d6CRsfJcqrz2FX");
+        //NPP.ondbdiscovered = (db) => console.log(db.all());
+
+        NPP.oncompaniononline = console.log
+        NPP.oncompanionnotfound = () => { throw(e) }
 
         // Shutting down IPFS node
         //await NPP.node.stop();
